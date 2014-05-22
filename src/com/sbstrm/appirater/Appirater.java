@@ -40,6 +40,9 @@ public class Appirater {
 	private static final String PREF_DATE_FIRST_LAUNCHED = "date_firstlaunch";
 	private static final String PREF_APP_VERSION_CODE = "versioncode";
 	
+    public static final String PREF_LAUNCHES_UNTIL_PROMPT = "launches_until_prompt";
+    public static final String PREF_DAYS_UNTIL_PROMPT = "days_until_prompt";
+	
     public static void appLaunched(Context mContext) {
     	boolean testMode = mContext.getResources().getBoolean(R.bool.appirator_test_mode);
         SharedPreferences prefs = mContext.getSharedPreferences(mContext.getPackageName()+".appirater", 0);
@@ -85,9 +88,13 @@ public class Appirater {
             editor.putLong(PREF_DATE_FIRST_LAUNCHED, date_firstLaunch);
         }
         
+        int launchesUntilPrompt = prefs.getInt(PREF_LAUNCHES_UNTIL_PROMPT,
+                mContext.getResources().getInteger(R.integer.appirator_launches_until_prompt));
         // Wait at least n days or m events before opening
-        if (launch_count >= mContext.getResources().getInteger(R.integer.appirator_launches_until_prompt)) {
-			long millisecondsToWait = mContext.getResources().getInteger(R.integer.appirator_days_until_prompt) * 24 * 60 * 60 * 1000L;			
+        if (launch_count >= launchesUntilPrompt) {
+            int daysUntilPrompt = prefs.getInt(PREF_DAYS_UNTIL_PROMPT,
+                    mContext.getResources().getInteger(R.integer.appirator_days_until_prompt));
+            long millisecondsToWait = daysUntilPrompt * 24 * 60 * 60 * 1000L;
 			if (System.currentTimeMillis() >= (date_firstLaunch + millisecondsToWait) || event_count >= mContext.getResources().getInteger(R.integer.appirator_events_until_prompt)) {
 				if(date_reminder_pressed == 0){
 					showRateDialog(mContext, editor);
@@ -156,6 +163,7 @@ public class Appirater {
         Button rateButton = (Button) layout.findViewById(R.id.rate);
         rateButton.setText(String.format(mContext.getString(R.string.rate), appName));
         rateButton.setOnClickListener(new OnClickListener() {
+            @Override
             public void onClick(View v) {
                 rateApp(mContext, editor);
                 dialog.dismiss();
@@ -165,6 +173,7 @@ public class Appirater {
         Button rateLaterButton = (Button) layout.findViewById(R.id.rateLater);
         rateLaterButton.setText(mContext.getString(R.string.rate_later));
         rateLaterButton.setOnClickListener(new OnClickListener() {
+            @Override
             public void onClick(View v) {
             	if (editor != null) {
     				editor.putLong(PREF_DATE_REMINDER_PRESSED,System.currentTimeMillis());
@@ -177,6 +186,7 @@ public class Appirater {
         Button cancelButton = (Button) layout.findViewById(R.id.cancel);
         cancelButton.setText(mContext.getString(R.string.rate_cancel));
         cancelButton.setOnClickListener(new OnClickListener() {
+            @Override
             public void onClick(View v) {
                 if (editor != null) {
                     editor.putBoolean(PREF_DONT_SHOW, true);
